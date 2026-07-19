@@ -1,16 +1,108 @@
-<header class="mtv-header">
-  <a class="mtv-brand" href="/" aria-label="Melbourne TVs home">Melbourne<span>TVs</span></a>
-  <nav class="mtv-nav" aria-label="Main navigation">
-    <a href="/services/">Services</a>
-    <a href="/locations/">Areas</a>
-    <a href="/blog/">Advice</a>
-    <a href="/pricing/">Quoting</a>
-  </nav>
-  <a class="mtv-quote" href="/quote/">Get a written quote</a>
-</header>
+<div class="page-header-wrapper">
+  <div class="site-header">
+    <div class="top-bar">
+      <div class="container">
+        <div class="top-left">
+          <a href="/quote/">Melbourne launch · written quotes open</a>
+        </div>
+        <div class="top-center" aria-label="Service principles">
+          <div class="item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+            <span>Photo-first scope</span>
+          </div>
+          <div class="item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            <span>Availability confirmed</span>
+          </div>
+          <div class="item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="10" rx="1"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Written price before booking</span>
+          </div>
+        </div>
+        <div class="top-right"><a href="/blog/">Journal</a></div>
+      </div>
+    </div>
+
+    <header class="main-header">
+      <div class="container">
+        <a href="/" class="logo brand-wordmark" aria-label="Melbourne TVs home">
+          <strong>MELBOURNE</strong><span>TVs</span>
+        </a>
+
+        <nav class="main-nav" aria-label="Main navigation">
+          <a href="/services/">Services</a>
+          <a href="/locations/">Locations</a>
+          <a href="/products/">Products</a>
+          <a href="/mounts/">Mounts</a>
+          <a href="/pricing/">Pricing</a>
+          <a href="/blog/">Blog</a>
+          <a href="/quote/">Quote</a>
+        </nav>
+
+        <div class="header-right">
+          <a href="/quote/" class="header-text-link">Written quotes</a>
+          <a href="/quote/" class="header-book-btn">Get a quote</a>
+        </div>
+
+        <button class="hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </header>
+  </div>
+</div>
+
+<div class="mobile-menu-backdrop" id="mobileMenuBackdrop"></div>
+<aside class="mobile-menu" id="mobileMenu" aria-hidden="true" aria-label="Mobile navigation">
+  <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Close menu">×</button>
+  <a href="/services/">Services</a>
+  <a href="/locations/">Locations</a>
+  <a href="/products/">Products</a>
+  <a href="/mounts/">Mounts</a>
+  <a href="/pricing/">Pricing</a>
+  <a href="/blog/">Journal</a>
+  <div class="mobile-menu-cta">
+    <a class="mobile-menu-call" href="/locations/">Check area</a>
+    <a class="mobile-menu-book" href="/quote/">Get a quote</a>
+  </div>
+  <div class="mobile-menu-footer">
+    <div class="mobile-drawer-wordmark"><strong>MELBOURNE</strong><span>TVs</span></div>
+    <p class="mobile-menu-tagline">The Melbourne TVs standard: precise scoping, clear written details and installer matching.</p>
+    <p class="mobile-menu-fineprint">Installer identity, availability, scope and price are confirmed before an appointment. Fixed electrical work requires a Victorian licensed electrician.</p>
+  </div>
+</aside>
 
 <style>
-  .mtv-header{position:relative;z-index:20;min-height:76px;padding:0 max(20px,calc((100vw - 1180px)/2));display:flex;align-items:center;gap:34px;background:#0d1714;color:#fff;border-bottom:1px solid rgba(255,255,255,.14);font-family:Inter,system-ui,sans-serif}
-  .mtv-brand{font-size:1.3rem;font-weight:700;letter-spacing:-.04em;text-decoration:none}.mtv-brand span{color:#82d0ae}.mtv-nav{display:flex;gap:28px;margin-left:auto}.mtv-nav a{color:#d8e4df;text-decoration:none;font-size:.92rem;font-weight:600}.mtv-quote{min-height:42px;display:inline-flex;align-items:center;padding:0 18px;border-radius:999px;background:#ee7a35;color:#21170e;text-decoration:none;font-weight:700;font-size:.9rem}
-  @media(max-width:720px){.mtv-header{min-height:68px;gap:12px}.mtv-nav{display:none}.mtv-quote{margin-left:auto;padding:0 13px;font-size:.82rem}.mtv-brand{font-size:1.1rem}}
+  .brand-wordmark{font-family:Inter,sans-serif;font-size:21px;font-weight:900;letter-spacing:-1.25px;color:#fff;line-height:1}
+  .brand-wordmark strong{font-weight:900}.brand-wordmark span{color:#5b50ec;font-size:1.18em;font-weight:900;letter-spacing:-1.7px}
+  body.page-subpage .brand-wordmark,.site-header.is-menu-open .brand-wordmark{color:#0a0a0c}
+  .header-text-link{display:inline-flex;align-items:center;color:#fff;font-size:13px;font-weight:500;white-space:nowrap}
+  body.page-subpage .header-text-link,.site-header.is-menu-open .header-text-link{color:#1a1a1a}
+  .mobile-drawer-wordmark{font-family:Inter,sans-serif;font-size:22px;font-weight:900;letter-spacing:-1.2px;color:#fff;margin-bottom:14px}
+  .mobile-drawer-wordmark span{color:#5b50ec;font-size:1.18em}
+  @media(max-width:1200px){.header-text-link{display:none}}
 </style>
+
+<script is:inline>
+  (() => {
+    const button = document.getElementById('hamburgerBtn');
+    const menu = document.getElementById('mobileMenu');
+    const backdrop = document.getElementById('mobileMenuBackdrop');
+    const close = document.getElementById('mobileMenuClose');
+    if (!button || !menu || !backdrop || !close) return;
+
+    const setOpen = (open) => {
+      button.classList.toggle('is-open', open);
+      menu.classList.toggle('active', open);
+      backdrop.classList.toggle('active', open);
+      document.body.classList.toggle('menu-open', open);
+      button.setAttribute('aria-expanded', String(open));
+      menu.setAttribute('aria-hidden', String(!open));
+    };
+
+    button.addEventListener('click', () => setOpen(button.getAttribute('aria-expanded') !== 'true'));
+    close.addEventListener('click', () => setOpen(false));
+    backdrop.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setOpen(false); });
+  })();
+</script>
