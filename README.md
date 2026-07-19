@@ -12,21 +12,20 @@ Melbourne-specific TV mounting website and lead operations, derived from the cur
 - Installer research: `research/installers/`
 - Market and compliance context: `research/market/`
 
-Cloudflare Pages builds from the `astro` directory with `npm run build` and publishes `dist`. The API Worker owns `melbournetvs.com/api/*` and stores leads in a dedicated D1 database, with private uploads in a dedicated R2 bucket.
+Astro builds the static site into `astro/dist`. The Melbourne Worker deploys those static assets and the `/api/*` lead routes together on the root and `www` custom domains. Leads are stored in a dedicated D1 database and private uploads in a dedicated R2 bucket.
 
 ## Local verification
 
 ```text
 cd astro
-npm install
-npm run build
-node scripts/audit-links.mjs
+pnpm install --frozen-lockfile
+pnpm run build
 
 cd ../workers
-npm install
+npm ci
 npx wrangler types
-node --test
-npx wrangler deploy --dry-run
+npm test
+npm run deploy:dry
 ```
 
 ## Launch safety

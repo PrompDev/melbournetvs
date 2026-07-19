@@ -1,6 +1,6 @@
 # Melbourne TVs site
 
-The Astro 7 static site builds from this directory and publishes `dist/` through Cloudflare Pages.
+The Astro 7 static site builds from this directory. The Melbourne lead Worker publishes `dist/` as Cloudflare Workers static assets.
 
 - `public/index.html` is the homepage.
 - `src/pages/` contains the intentional public routes.
@@ -16,9 +16,4 @@ pnpm run build
 pnpm audit --prod
 ```
 
-Cloudflare Pages settings:
-
-- Root directory: `astro`
-- Build command: `pnpm run build`
-- Output directory: `dist`
-- Production branch: `main`
+Deployment runs from `../workers`: build this site first, then deploy the Worker. Its Wrangler configuration binds `../astro/dist`, runs Worker code first for `/api/*`, and serves all other requests as static assets.

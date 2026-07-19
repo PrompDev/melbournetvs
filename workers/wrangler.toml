@@ -3,8 +3,17 @@ main = "lead-worker.js"
 compatibility_date = "2026-07-19"
 compatibility_flags = ["nodejs_compat"]
 account_id = "8d813ed7931872a79e12d13a6669b601"
-route = "melbournetvs.com/api/*"
 workers_dev = true
+
+routes = [
+  { pattern = "melbournetvs.com/*", zone_name = "melbournetvs.com" },
+  { pattern = "www.melbournetvs.com/*", zone_name = "melbournetvs.com" }
+]
+
+[assets]
+directory = "../astro/dist"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
 
 [observability]
 enabled = true

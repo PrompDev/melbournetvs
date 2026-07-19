@@ -1,6 +1,11 @@
 {
   "private": true,
   "type": "module",
+  "scripts": {
+    "test": "node --test lead-worker.test.mjs",
+    "deploy:dry": "wrangler deploy --dry-run",
+    "deploy": "wrangler deploy"
+  },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260719.1",
     "@types/node": "^26.1.1",

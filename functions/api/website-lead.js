@@ -99,7 +99,7 @@ function corsHeaders(request) {
   const allowed = new Set([
     "https://melbournetvs.com",
     "https://www.melbournetvs.com",
-    "https://melbournetvs.pages.dev",
+    "https://melbournetvs-lead-worker.tomdavie016.workers.dev",
   ]);
 
   if (!origin || !allowed.has(origin)) return {};
@@ -184,7 +184,7 @@ function publicPageUrl(value) {
     const url = new URL(text, "https://melbournetvs.com");
     const host = url.hostname.toLowerCase();
     const isProduction = host === "melbournetvs.com" || host === "www.melbournetvs.com";
-    const isPreview = host === "melbournetvs.pages.dev";
+    const isPreview = host === "melbournetvs-lead-worker.tomdavie016.workers.dev";
     if (url.protocol !== "https:" || (!isProduction && !isPreview)) return "";
     const origin = isProduction ? "https://melbournetvs.com" : url.origin;
     return (origin + url.pathname).slice(0, FIELD_LIMITS.pageUrl);
