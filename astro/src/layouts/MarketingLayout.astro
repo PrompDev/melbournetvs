@@ -1,0 +1,125 @@
+---
+/** Shared public-page shell and structured business metadata. */
+
+import Header from "~/components/Header.astro";
+import Footer from "~/components/Footer.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  ogImage?: string;
+  /** Added as JSON-LD script tag inside <head>. Pass a single object or an array. */
+  jsonLd?: Record<string, any> | Record<string, any>[];
+  /** Set true on admin / preview pages so search engines don't index them. */
+  noindex?: boolean;
+  /**
+   * Optional keywords for the <meta name="keywords"> tag. Google ignores it
+   * but Bing and some local-SEO crawlers still read it. Keep it short.
+   */
+  keywords?: string;
+  /** Per-page body class hook so we can scope tweaks in marketing.css if ever needed. */
+  bodyClass?: string;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  ogImage = "https://cdn.brisbanetvs.com/work/v1/installer-large-tv.jpg",
+  jsonLd,
+  noindex = false,
+  keywords,
+  bodyClass = "",
+} = Astro.props;
+
+const SITE = "https://melbournetvs.com";
+const pageUrl = canonical ?? new URL(Astro.url.pathname, SITE).toString();
+const serviceAreas = [
+  "Central and Inner Melbourne",
+  "Inner North Melbourne",
+  "Inner East Melbourne",
+  "Bayside and Inner South-East Melbourne",
+  "East Melbourne and the Dandenong Ranges",
+  "North Melbourne and Airport corridor",
+  "West and North-West Melbourne",
+  "South-East Growth Corridor",
+  "Frankston and Mornington Peninsula",
+].map((name) => ({ "@type": "AdministrativeArea", name }));
+
+// Always emit a LocalBusiness schema so every page gives Google the core
+// entity info. Extra per-page JSON-LD is appended afterwards.
+const localBusiness = {
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "Melbourne TVs",
+  "image": "https://cdn.brisbanetvs.com/work/v1/installer-large-tv.jpg",
+  "@id": SITE + "/#business",
+  "url": SITE,
+  "email": "admin@melbournetvs.com",
+  "address": { "@type": "PostalAddress", "addressRegion": "VIC", "addressCountry": "AU" },
+  "areaServed": serviceAreas,
+  "openingHoursSpecification": [{
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+    "opens": "07:00",
+    "closes": "19:00",
+  }],
+};
+
+const extraJsonLd = Array.isArray(jsonLd) ? jsonLd : (jsonLd ? [jsonLd] : []);
+
+// Every MarketingLayout-wrapped page is a back page. The homepage is the
+// static /index.html. We always stamp `page-subpage`
+// onto the body so marketing.css can flip the header out of its transparent-
+// over-hero state and into an opaque white chrome. The per-page bodyClass
+// still gets carried through for page-specific scoping hooks.
+const finalBodyClass = ["page-subpage", bodyClass].filter(Boolean).join(" ");
+---
+<!DOCTYPE html>
+<html lang="en-AU">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {keywords && <meta name="keywords" content={keywords} />}
+    {noindex && <meta name="robots" content="noindex,nofollow" />}
+    <link rel="canonical" href={pageUrl} />
+
+    <meta property="og:site_name" content="Melbourne TVs" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_AU" />
+    <meta property="og:url" content={pageUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <meta name="geo.region" content="AU-VIC" />
+    <meta name="geo.placename" content="Melbourne" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+    <!-- Homepage design system — same stylesheet used by /index.html so the
+         whole site shares one source of truth for chrome + hero + buttons. -->
+    <link rel="stylesheet" href="/css/marketing.css" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(localBusiness)}></script>
+    {extraJsonLd.map((entry) => (
+      <script type="application/ld+json" set:html={JSON.stringify(entry)}></script>
+    ))}
+  </head>
+  <body class={finalBodyClass}>
+    <Header />
+    <main class="page-main" role="main">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

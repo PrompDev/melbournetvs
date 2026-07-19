@@ -1,0 +1,27 @@
+# Astro build artefacts
+dist/
+.astro/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Unused legacy editorial images retained locally from the Brisbane source
+# checkout. The Melbourne launch only needs the mounting hero image.
+public/media/1280px-al_khazneh.jpg
+public/media/full_cycle_of_a_sunset_on_the_high_plains_of_the_mojave_desert.jpg
+public/media/how-diogenes-of-sinope-laid-the-philosophical-foundation-for-stoic-thought_1200x.webp
+public/media/mounting-big-tv-on-brick-inline-1.webp
+public/media/mounting-big-tv-on-brick-inline-2.webp
+public/media/mounting-big-tv-on-brick-inline-3.jpg

@@ -1,0 +1,91 @@
+---
+import MarketingLayout from "~/layouts/MarketingLayout.astro";
+
+const zones = [
+  { name: "Central & Inner", count: 31, launch: "Melbourne, Carlton, Fitzroy, Richmond, Southbank, St Kilda, Port Melbourne" },
+  { name: "Inner North", count: 37, launch: "Brunswick, Coburg, Northcote, Preston" },
+  { name: "Inner East", count: 37, launch: "Balwyn, Box Hill, Burwood, Camberwell, Doncaster, Hawthorn, Kew" },
+  { name: "Bayside & Inner South-East", count: 63, launch: "Brighton, Bentleigh, Carnegie, Cheltenham, Moorabbin, Oakleigh, South Yarra" },
+  { name: "East & Dandenong Ranges", count: 83, launch: "Bayswater, Boronia, Croydon, Lilydale, Ringwood, Rowville, Wantirna" },
+  { name: "North & Airport", count: 58, launch: "Craigieburn, Epping, Mernda, South Morang, Sunbury, Wollert" },
+  { name: "West & North-West", count: 98, launch: "Essendon, Footscray, Point Cook, Tarneit, Werribee, Williamstown, Yarraville" },
+  { name: "South-East Growth Corridor", count: 79, launch: "Berwick, Cranbourne, Dandenong, Narre Warren, Officer, Pakenham, Springvale" },
+  { name: "Frankston & Mornington Peninsula", count: 48, launch: "Frankston, Mornington, Rosebud" },
+];
+
+const pageUrl = new URL("/locations/", Astro.site).toString();
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: new URL("/", Astro.site).toString() },
+    { "@type": "ListItem", position: 2, name: "Service areas", item: pageUrl },
+  ],
+};
+---
+
+<MarketingLayout
+  title="Melbourne TV Mounting Service Areas | Melbourne TVs"
+  description="Check the nine Melbourne dispatch zones being prepared for TV wall mounting. Installer availability and a written price are confirmed before any appointment."
+  canonical={pageUrl}
+  ogImage="https://cdn.brisbanetvs.com/work/v1/installer-large-tv.jpg"
+  jsonLd={breadcrumbLd}
+  bodyClass="page-locations-index"
+>
+  <section class="idx-banner">
+    <img class="idx-banner-img" src="https://cdn.brisbanetvs.com/work/v1/installer-large-tv.jpg" width="2880" height="2160" alt="" aria-hidden="true" />
+    <div class="idx-banner-inner"><p class="idx-banner-title">Melbourne service areas</p></div>
+  </section>
+
+  <article class="idx">
+    <div class="idx-split">
+      <div class="idx-split-left">
+        <nav class="idx-crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">›</span><span>Service areas</span></nav>
+        <header class="idx-hero-copy">
+          <p class="idx-eyebrow">Nine practical dispatch zones</p>
+          <h1>Local coverage, confirmed before you book.</h1>
+          <p class="idx-lede">We mapped 534 official Melbourne localities so enquiries can be routed to the right installer. Send your suburb and job photos; we will confirm local capacity, scope and a written price before offering an appointment.</p>
+          <div class="idx-stats">
+            <div class="idx-stat"><span class="idx-stat-k">Localities mapped</span><span class="idx-stat-v">534</span></div>
+            <div class="idx-stat"><span class="idx-stat-k">Dispatch zones</span><span class="idx-stat-v">9</span></div>
+            <div class="idx-stat"><span class="idx-stat-k">First release</span><span class="idx-stat-v">74 suburbs</span></div>
+            <div class="idx-stat"><span class="idx-stat-k">Availability</span><span class="idx-stat-v">Confirmed in writing</span></div>
+          </div>
+          <div class="idx-cta-row"><a class="idx-btn idx-btn-primary" href="/quote/">Check your suburb</a><a class="idx-btn idx-btn-ghost" href="/services/">View services</a></div>
+        </header>
+      </div>
+      <div class="idx-split-img-wrap"><img class="idx-split-img" src="https://cdn.brisbanetvs.com/work/v1/apartment-wall-mounted-tv.jpg" width="1600" height="1200" alt="A neatly wall-mounted television above a timber media cabinet" /></div>
+    </div>
+
+    <hr class="idx-section-divider" />
+
+    <section class="idx-list-section" aria-labelledby="zones-heading">
+      <h2 id="zones-heading">Melbourne dispatch zones</h2>
+      <p class="u-muted">The examples below are routing priorities, not a promise of instant availability. Nearby suburbs can still request a coverage check.</p>
+      <ul class="idx-card-grid">
+        {zones.map((zone) => (
+          <li class="idx-card">
+            <div class="idx-card-body">
+              <p class="idx-card-eyebrow">{zone.count} mapped localities</p>
+              <h3 class="idx-card-title">{zone.name}</h3>
+              <p class="idx-card-desc">Initial routing areas: {zone.launch}.</p>
+              <div class="idx-card-foot"><a href="/quote/">Check an address →</a></div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="idx-why" aria-labelledby="coverage-heading">
+      <h2 id="coverage-heading">How coverage is confirmed</h2>
+      <ul class="idx-why-list">
+        <li><span class="idx-why-k">1. Send the details</span><span class="idx-why-v">Your suburb, TV size, wall photos and preferred timing.</span></li>
+        <li><span class="idx-why-k">2. Scope the work</span><span class="idx-why-v">We identify wall, bracket, lift, access and cable requirements.</span></li>
+        <li><span class="idx-why-k">3. Match local capacity</span><span class="idx-why-v">The independent installer and their availability are disclosed before booking.</span></li>
+        <li><span class="idx-why-k">4. Confirm in writing</span><span class="idx-why-v">You receive the agreed scope and price before the appointment.</span></li>
+      </ul>
+    </section>
+
+    <aside class="idx-foot-cta"><div><h2>Not sure which zone you are in?</h2><p>Send the address and photos. We will check it against the full locality map.</p></div><a class="idx-btn idx-btn-primary" href="/quote/">Request a coverage check</a></aside>
+  </article>
+</MarketingLayout>

@@ -1,0 +1,9 @@
+---
+import MarketingLayout from "~/layouts/MarketingLayout.astro";
+const canonical = new URL("/blog/", Astro.site).toString();
+---
+
+<MarketingLayout title="Melbourne TV Mounting Advice | Melbourne TVs" description="Practical Melbourne TV mounting guidance is being reviewed for local wall types, electrical boundaries and installer operations." canonical={canonical} ogImage="https://cdn.brisbanetvs.com/work/v1/tv-above-fireplace.jpg">
+  <section class="idx-banner"><img class="idx-banner-img" src="https://cdn.brisbanetvs.com/work/v1/tv-above-fireplace.jpg" width="1600" height="1200" alt="" aria-hidden="true" /><div class="idx-banner-inner"><p class="idx-banner-title">Advice</p></div></section>
+  <article class="idx"><header class="idx-hero-copy"><p class="idx-eyebrow">Local review in progress</p><h1>Melbourne installation guides are being prepared.</h1><p class="idx-lede">The initial articles are intentionally offline while wall-type guidance, Victorian electrical boundaries and local installer advice are checked. The quote flow is open now if you need help with a specific setup.</p><div class="idx-cta-row"><a class="idx-btn idx-btn-primary" href="/quote/">Ask about your setup</a><a class="idx-btn idx-btn-ghost" href="/services/">View services</a></div></header></article>
+</MarketingLayout>

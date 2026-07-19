@@ -1,0 +1,485 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+import { getLocationImage } from "~/data/installationImages";
+
+/**
+ * Only link to nearby suburbs and services that actually exist as collection
+ * entries — otherwise cross-links 404. Build lookup sets once per render.
+ */
+const __locationEntries = await getCollection("locations", ({ data }) => !data.draft);
+const __existingLocations = new Set(__locationEntries.map((entry) => entry.id));
+const __locationNames = new Map(
+  __locationEntries.map((entry) => [entry.id, entry.data.suburb]),
+);
+const __existingServices = new Set(
+  (await getCollection("services", ({ data }) => !data.draft)).map((e) => e.id),
+);
+
+/**
+ * LocationPage — suburb-level landing page for the `locations` collection.
+ *
+ * SEO payload:
+ *   - schema.org/Service JSON-LD linked to the one canonical business entity,
+ *     with the suburb and nearby service area made explicit.
+ *   - BreadcrumbList JSON-LD for Home › Locations › <Suburb>.
+ *   - FAQPage JSON-LD (only when entries have populated FAQs).
+ *
+ * A suburb landing page is not a separate branch or shop. Emitting it as a
+ * LocalBusiness would create hundreds of conflicting business entities.
+ */
+
+interface FaqItem { q: string; a: string; }
+
+interface Props {
+  slug: string;
+  frontmatter: {
+    title: string;
+    description: string;
+    heroImage: string;
+    heroAlt: string;
+    photoLocation?: string;
+    heroWidth?: number;
+    heroHeight?: number;
+    publishDate: Date;
+    updatedDate?: Date;
+    suburb: string;
+    postcode?: string;
+    region?: string;
+    latitude?: number;
+    longitude?: number;
+    travelTimeFromCbd?: string;
+    commonHousingStock: string[];
+    nearbySuburbs: string[];
+    servicesOffered: string[];
+    jobCount?: number;
+    faq: FaqItem[];
+    tags: string[];
+  };
+}
+
+const { frontmatter, slug } = Astro.props;
+const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const businessUrl = new URL("/", Astro.site).toString();
+const businessName = "Melbourne TVs";
+const hero = frontmatter.photoLocation
+  ? {
+      url: frontmatter.heroImage,
+      alt: frontmatter.heroAlt,
+      width: frontmatter.heroWidth ?? 1200,
+      height: frontmatter.heroHeight ?? 1200,
+    }
+  : getLocationImage(slug);
+
+// Filter related lists to only include entries that have real pages built.
+const filteredNearbySuburbs = frontmatter.nearbySuburbs.filter((s) => __existingLocations.has(s));
+const filteredServicesOffered = frontmatter.servicesOffered.filter((s) => __existingServices.has(s));
+
+/**
+ * Turn a service slug (e.g. "tv-wall-mounting") into a readable label
+ * ("TV Wall Mounting"). We special-case acronyms like TV so CSS
+ * `text-transform: capitalize` doesn't lower-case them into "Tv".
+ * Add new acronyms to the set below as collections grow (e.g. AV, HDMI).
+ */
+const ACRONYMS = new Set(["tv", "av", "hdmi", "uhd", "4k", "8k"]);
+function formatServiceLabel(slug: string): string {
+  return slug
+    .split("-")
+    .map((w) =>
+      ACRONYMS.has(w.toLowerCase())
+        ? w.toUpperCase()
+        : w.charAt(0).toUpperCase() + w.slice(1)
+    )
+    .join(" ");
+}
+
+const locationServiceLd: Record<string, any> = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "@id": `${pageUrl}#service`,
+  name: `TV mounting in ${frontmatter.suburb}`,
+  description: frontmatter.description,
+  url: pageUrl,
+  image: new URL(hero.url, Astro.site).toString(),
+  provider: {
+    "@type": "LocalBusiness",
+    "@id": `${businessUrl}#business`,
+    name: businessName,
+    url: businessUrl,
+  },
+  areaServed: [
+    { "@type": "Place", name: frontmatter.suburb },
+    ...filteredNearbySuburbs.map((s) => ({
+      "@type": "Place",
+      name: __locationNames.get(s) ?? s,
+    })),
+  ],
+  ...(filteredServicesOffered.length > 0
+    ? {
+        serviceType: filteredServicesOffered.map(formatServiceLabel),
+      }
+    : {}),
+};
+
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: businessUrl },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Locations",
+      item: new URL("/locations/", Astro.site).toString(),
+    },
+    { "@type": "ListItem", position: 3, name: frontmatter.suburb, item: pageUrl },
+  ],
+};
+
+const faqLd =
+  frontmatter.faq.length > 0
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: frontmatter.faq.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
+      }
+    : null;
+---
+<BaseLayout
+  title={frontmatter.title}
+  description={frontmatter.description}
+  image={hero.url}
+  canonical={pageUrl}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(locationServiceLd)} />
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbLd)} />
+  {faqLd && <script type="application/ld+json" set:html={JSON.stringify(faqLd)} />}
+
+  {/* Full-bleed banner strip — suburb name laid over a cinematic image.
+      Breaks out of the article's container using the 100vw margin trick
+      so it always spans the true viewport width regardless of parent. */}
+  <section class="loc-banner">
+    <img
+      class="loc-banner-img"
+      src={hero.url}
+      sizes="100vw"
+      width={hero.width}
+      height={hero.height}
+      alt=""
+      aria-hidden="true"
+      decoding="async"
+    />
+    <div class="loc-banner-inner">
+      <p class="loc-banner-title">{frontmatter.suburb}</p>
+    </div>
+  </section>
+
+  <article class="loc">
+    {/* Split layout: left column holds breadcrumbs↓hero copy↓services,
+        right column is a single image that stretches (align-items: stretch
+        on the grid) to whatever total height the left column ends up at.
+        Image is NOT a fixed aspect ratio — it fills the full vertical
+        space of the content next to it, then wraps to top on mobile. */}
+    <div class="loc-split">
+      <div class="loc-split-left">
+        <nav class="loc-crumbs" aria-label="Breadcrumb">
+          <a href="/">Home</a>
+          <span aria-hidden="true">›</span>
+          <a href="/locations/">Locations</a>
+          <span aria-hidden="true">›</span>
+          <span class="loc-crumbs-current">{frontmatter.suburb}</span>
+        </nav>
+        <header class="loc-hero-copy">
+          <p class="loc-eyebrow">Service area · {frontmatter.region ?? "Melbourne"}</p>
+          <h1>{frontmatter.title}</h1>
+          <p class="loc-lede">{frontmatter.description}</p>
+          <div class="loc-stats">
+            {frontmatter.postcode && (
+              <div class="loc-stat"><span class="loc-stat-k">Postcode</span><span class="loc-stat-v">{frontmatter.postcode}</span></div>
+            )}
+            {frontmatter.travelTimeFromCbd && (
+              <div class="loc-stat"><span class="loc-stat-k">From CBD</span><span class="loc-stat-v">{frontmatter.travelTimeFromCbd}</span></div>
+            )}
+            {typeof frontmatter.jobCount === "number" && (
+              <div class="loc-stat"><span class="loc-stat-k">Jobs completed</span><span class="loc-stat-v">{frontmatter.jobCount}+</span></div>
+            )}
+          </div>
+          <div class="loc-cta-row">
+            <a class="loc-btn loc-btn-primary" href="/quote/">Book in {frontmatter.suburb}</a>
+            <a class="loc-btn loc-btn-ghost" href="/services/">See all services</a>
+          </div>
+        </header>
+
+        {filteredServicesOffered.length > 0 && (
+          <section class="loc-services" aria-labelledby="loc-services-h">
+            <h2 id="loc-services-h">Services we cover in {frontmatter.suburb}</h2>
+            <ul class="loc-service-grid">
+              {filteredServicesOffered.map((s) => (
+                <li>
+                  <a class="loc-service-card" href={`/services/${s}/`}>
+                    <span class="loc-service-name">{formatServiceLabel(s)}</span>
+                    <span class="loc-service-arrow" aria-hidden="true">→</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+      {/* Wrapper + absolutely-positioned image: the wrapper is the grid
+          item (so grid sizes it from the left column's height via
+          align-items: stretch), and the image inside fills the wrapper
+          without contributing its own intrinsic height to the grid.
+          Net effect: picture ends exactly at the bottom of the left
+          column — never extends past "Services we cover". */}
+      <div class="loc-split-img-wrap">
+        <img
+          class="loc-split-img"
+          src={hero.url}
+          sizes="(max-width: 900px) 100vw, 45vw"
+          width={hero.width}
+          height={hero.height}
+          alt={hero.alt}
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
+        />
+        {frontmatter.photoLocation && (
+          <p class="loc-photo-location">Melbourne TVs installation · {frontmatter.photoLocation}</p>
+        )}
+      </div>
+    </div>
+
+    {/* Full-width divider line separates the split-header above from the
+        article body. Spans the entire 1720px container width — acts as a
+        visual "end of intro / start of deep content" marker. */}
+    <hr class="loc-section-divider" />
+
+    {/* Two-column article: 70% prose on the left, 20% sticky booking
+        card on the right (10% gap). Same sticky-sidebar pattern as the
+        blog — card follows the reader as they scroll through housing →
+        body → faq → nearby, so there's always a visible "book now" CTA. */}
+    <div class="loc-article-grid">
+      <div class="loc-article-main">
+        {frontmatter.commonHousingStock.length > 0 && (
+          <section class="loc-housing" aria-labelledby="loc-housing-h">
+            <h2 id="loc-housing-h">Common housing in {frontmatter.suburb}</h2>
+            <p class="u-muted">Our installers see these wall types most often in this suburb:</p>
+            <ul class="loc-housing-list">
+              {frontmatter.commonHousingStock.map((h) => (
+                <li><span class="loc-chip">{h}</span></li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section class="loc-body prose">
+          <slot />
+        </section>
+
+        {frontmatter.faq.length > 0 && (
+          <section class="loc-faq" aria-labelledby="loc-faq-h">
+            <h2 id="loc-faq-h">{frontmatter.suburb} install FAQs</h2>
+            <div class="loc-faq-list">
+              {frontmatter.faq.map((f) => (
+                <details class="loc-faq-item">
+                  <summary>{f.q}</summary>
+                  <p>{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {filteredNearbySuburbs.length > 0 && (
+          <section class="loc-nearby" aria-labelledby="loc-nearby-h">
+            <h2 id="loc-nearby-h">Nearby suburbs we also cover</h2>
+            <ul class="loc-nearby-list">
+              {filteredNearbySuburbs.map((n) => (
+                <li><a href={`/locations/${n}/`}>{n.replace(/-/g, " ")}</a></li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+
+      <aside class="loc-sidebar" aria-label="Booking sidebar">
+        <div class="loc-book-card">
+          <p class="loc-book-eyebrow">Melbourne TVs · {frontmatter.suburb}</p>
+          <h3 class="loc-book-title">Request a {frontmatter.suburb} quote</h3>
+          <p class="loc-book-desc">Send the TV, wall and access details for installer matching, an availability check and a written price.</p>
+          <ul class="loc-book-list">
+            <li><span class="loc-book-k">From CBD</span><span>{frontmatter.travelTimeFromCbd ?? "—"}</span></li>
+            <li><span class="loc-book-k">Postcode</span><span>{frontmatter.postcode ?? "—"}</span></li>
+            <li><span class="loc-book-k">Jobs done</span><span>{typeof frontmatter.jobCount === "number" ? `${frontmatter.jobCount}+` : "—"}</span></li>
+          </ul>
+          <a class="loc-book-btn" href="/quote/">Request a quote in {frontmatter.suburb} →</a>
+          <a class="loc-book-link" href="/quote/">or request a callback</a>
+        </div>
+      </aside>
+    </div>
+
+    <aside class="loc-foot-cta">
+      <div>
+        <h2>Book a {frontmatter.suburb} installer</h2>
+        <p>Same-week bookings across {frontmatter.region ?? "Melbourne"}. Upfront pricing, guaranteed work.</p>
+      </div>
+      <a class="loc-btn loc-btn-primary" href="/quote/">Get a free quote</a>
+    </aside>
+  </article>
+</BaseLayout>
+
+<style is:global>
+  /* Full-bleed banner strip sitting above the article. Uses the
+     `margin-left/right: calc(50% - 50vw)` trick to escape any parent
+     container and span the real viewport width, which is what makes
+     the banner feel cinematic instead of boxed in. The inner `.loc-banner-inner`
+     re-aligns the title with the site container (90% width, 1720px cap)
+     so the suburb name sits under the logo's left edge. */
+  .loc-banner { position: relative; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); width: 100vw; height: clamp(240px, 32vh, 420px); overflow: hidden; background: #131619; }
+  .loc-banner-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+  /* Left-to-right dark fade: plenty of contrast behind the suburb
+     title on the left, tapers to transparent on the right so the
+     cinematic image still reads. Light enough not to muddy the image
+     but dark enough that white type pops on any background image. */
+  .loc-banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 35%, rgba(0,0,0,0) 70%); pointer-events: none; }
+  .loc-banner-inner { position: relative; z-index: 1; width: 100%; max-width: 1200px; height: 100%; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; }
+  @media (min-width: 1201px) {
+    .loc-banner-inner { width: 90%; max-width: 1720px; padding: 0; }
+  }
+  /* Inherits the site's default sans (Inter) — the serif display font
+     was too formal over the cinematic banner image, so we drop the
+     font-family and let the global body font take over. */
+  .loc-banner-title { margin: 0; color: #fff; font-weight: 400; font-size: clamp(2.5rem, 6vw, 5rem); letter-spacing: 0.02em; text-transform: uppercase; line-height: 1; text-shadow: 0 2px 18px rgba(0,0,0,0.35); }
+
+  /* Outer container mirrors the site header exactly:
+       @media (min-width: 1201px) {
+         .site-header .container, .main-header .container {
+           width: 90%; max-width: 1720px; padding: 0;
+         }
+       }
+     Below 1201px the header reverts to the default 1200px container with
+     a 24px gutter, so we mirror that too. No horizontal padding at the
+     desktop breakpoint — the 90% width itself supplies the margins. */
+  .loc { width: 100%; max-width: 1200px; margin: 0 auto; padding: 2rem 24px 4rem; }
+  @media (min-width: 1201px) {
+    .loc { width: 90%; max-width: 1720px; padding: 2rem 0 4rem; }
+  }
+  /* Top-of-article spacing. Breadcrumbs now sit INSIDE the left split
+     column (so they're aligned with the title, not floating full-width
+     above the split). Extra margin-bottom gives the nav room to breathe
+     before the eyebrow/title block. */
+  .loc-crumbs { font-size: 0.85rem; color: #5a6271; display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 3.5rem; }
+  .loc-crumbs a { color: #5a6271; text-decoration: none; }
+  .loc-crumbs a:hover { color: #131619; text-decoration: underline; }
+  .loc-crumbs-current { color: #131619; font-weight: 500; text-transform: capitalize; }
+
+  /* Split row that holds the whole top-of-page block:
+       left column = breadcrumbs-anchored hero copy + services grid
+       right column = single image that stretches to match
+     align-items: stretch + height: 100% on the image is what makes the
+     image scale vertically to whatever height the left column ends up
+     being — no forced aspect ratio, no fixed square. The whole split
+     lives inside the 1720px container, so it's effectively full-width
+     of the page above 1201px. */
+  .loc-split { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 2.5rem; align-items: stretch; margin-bottom: 2rem; }
+  .loc-split-left { display: flex; flex-direction: column; min-width: 0; }
+  /* Wrapper owns the grid cell — image inside is absolutely positioned
+     so it can't push the row taller than the left column. */
+  .loc-split-img-wrap { position: relative; width: 100%; height: 100%; min-height: 0; border-radius: 10px; overflow: hidden; background: #eef0f3; }
+  .loc-split-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .loc-photo-location { position: absolute; right: 14px; bottom: 12px; z-index: 1; margin: 0; padding: 7px 10px; border-radius: 999px; background: rgba(13,18,22,.82); color: #fff; font: 600 .72rem/1.2 Inter, sans-serif; }
+  @media (max-width: 760px) {
+    .loc-split { grid-template-columns: 1fr; }
+    .loc-split-img-wrap { position: relative; height: auto; aspect-ratio: 4/3; }
+    .loc-split-img { position: absolute; inset: 0; }
+  }
+  .loc-hero-copy { display: flex; flex-direction: column; justify-content: flex-start; margin-bottom: 4rem; }
+  .loc-eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: #8a94a6; margin: 0 0 0.5rem; font-weight: 600; }
+  .loc-hero-copy h1 { font-size: clamp(1.8rem, 3.2vw, 2.6rem); line-height: 1.15; margin: 0 0 0.75rem; }
+  .loc-lede { font-size: 1.05rem; color: #3d4656; line-height: 1.55; margin: 0 0 1.25rem; }
+  .loc-stats { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-bottom: 1.25rem; }
+  .loc-stat { display: flex; flex-direction: column; gap: 0.15rem; }
+  .loc-stat-k { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: #8a94a6; font-weight: 600; }
+  .loc-stat-v { font-size: 1.05rem; color: #131619; font-weight: 600; }
+  .loc-cta-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .loc-btn { display: inline-flex; align-items: center; padding: 0.7rem 1.3rem; border-radius: 6px; font-weight: 600; text-decoration: none; font-size: 0.95rem; }
+  .loc-btn-primary { background: #131619; color: #fff; }
+  .loc-btn-primary:hover { background: #2a2f35; }
+  .loc-btn-ghost { background: transparent; color: #131619; border: 1px solid #d7dbe2; }
+  .loc-btn-ghost:hover { border-color: #131619; }
+
+  /* Services section — sits inside the left split column now, so no
+     outer max-width (the column itself constrains width). */
+  .loc-services { margin: 0; }
+
+  /* Full-width horizontal rule sitting flush between the split hero
+     and the article grid below. Same container edges — no inset. */
+  .loc-section-divider { width: 100%; border: 0; border-top: 1px solid #e5e7eb; margin: 3.5rem 0 0; }
+
+  /* Article grid — flexible main column + fixed 380px sidebar so the
+     booking card has real breathing room on every viewport. Column
+     gap trimmed to 4rem (was 10%) so the card sits closer to the
+     prose. Mirrors the blog's sticky-sidebar idea. */
+  .loc-article-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; column-gap: 4rem; row-gap: 2rem; align-items: start; margin: 3.5rem 0; }
+  .loc-article-main { min-width: 0; }
+  /* Reset section margins inside the grid so the grid itself owns
+     vertical rhythm — first section flush with the divider top. */
+  .loc-article-main > section { margin: 0 0 3.5rem; }
+  .loc-article-main > section:last-child { margin-bottom: 0; }
+
+  /* Sticky booking card — sits next to the prose and follows the
+     reader. `top: 6rem` clears the fixed header with a little air. */
+  .loc-sidebar { position: sticky; top: 6rem; align-self: start; }
+  .loc-book-card { background: #131619; color: #fff; padding: 1.75rem; border-radius: 12px; display: flex; flex-direction: column; gap: 0.85rem; }
+  .loc-book-eyebrow { margin: 0; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8a94a6; font-weight: 600; }
+  .loc-book-title { margin: 0; font-size: 1.25rem; line-height: 1.25; color: #fff; font-family: 'Noto Serif', serif; font-weight: 400; }
+  .loc-book-desc { margin: 0; color: #c5ccd6; font-size: 0.92rem; line-height: 1.55; }
+  .loc-book-list { list-style: none; padding: 0; margin: 0.25rem 0 0; display: flex; flex-direction: column; gap: 0.5rem; border-top: 1px solid #2a2f35; padding-top: 0.9rem; }
+  .loc-book-list li { display: flex; justify-content: space-between; font-size: 0.88rem; color: #eef0f3; }
+  .loc-book-k { color: #8a94a6; }
+  .loc-book-btn { display: inline-flex; justify-content: center; margin-top: 0.6rem; padding: 0.75rem 1rem; background: #fff; color: #131619; font-weight: 600; border-radius: 8px; text-decoration: none; transition: background 0.15s; }
+  .loc-book-btn:hover { background: #eef0f3; }
+  .loc-book-link { color: #8a94a6; font-size: 0.85rem; text-decoration: underline; text-align: center; }
+  .loc-book-link:hover { color: #fff; }
+
+  /* Collapse to single column under 900px — sidebar drops below and
+     un-sticks so it doesn't float mid-scroll on narrow screens. */
+  @media (max-width: 900px) {
+    .loc-article-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .loc-sidebar { position: static; }
+  }
+  .loc-services h2, .loc-housing h2, .loc-faq h2, .loc-nearby h2 { font-size: 1.4rem; margin: 0 0 1rem; }
+  .loc-service-grid { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.6rem; }
+  .loc-service-card { display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 1rem; background: #fafbfc; border: 1px solid #eef0f3; border-radius: 8px; text-decoration: none; color: #131619; transition: border-color 0.15s; }
+  .loc-service-card:hover { border-color: #131619; }
+  .loc-service-name { font-weight: 500; }
+  .loc-service-arrow { color: #8a94a6; }
+
+  .loc-housing-list { list-style: none; padding: 0; margin: 0.75rem 0 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .loc-chip { display: inline-flex; padding: 0.35rem 0.8rem; background: #eef0f3; color: #131619; border-radius: 999px; font-size: 0.85rem; }
+
+  .loc-faq-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .loc-faq-item { background: #fff; border: 1px solid #eef0f3; border-radius: 8px; padding: 0.85rem 1rem; }
+  .loc-faq-item summary { font-weight: 600; cursor: pointer; list-style: none; }
+  .loc-faq-item summary::-webkit-details-marker { display: none; }
+  .loc-faq-item summary::after { content: "+"; float: right; color: #8a94a6; font-weight: 400; }
+  .loc-faq-item[open] summary::after { content: "−"; }
+  .loc-faq-item p { margin: 0.75rem 0 0; color: #3d4656; line-height: 1.6; }
+
+  .loc-nearby-list { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
+  .loc-nearby-list a { color: #131619; text-transform: capitalize; }
+
+  .loc-foot-cta { margin-top: 3rem; padding: 1.75rem; background: #131619; color: #fff; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+  /* Explicit white on the h2 — global h2 styles were overriding the
+     inherited white from the container, leaving dark text on the dark
+     foot bar. */
+  .loc-foot-cta h2 { margin: 0 0 0.35rem; font-size: 1.3rem; color: #fff; }
+  .loc-foot-cta p { margin: 0; color: #c5ccd6; }
+  .loc-foot-cta .loc-btn-primary { background: #fff; color: #131619; }
+  .loc-foot-cta .loc-btn-primary:hover { background: #eef0f3; }
+</style>

@@ -1,0 +1,14 @@
+---
+import MarketingLayout from "~/layouts/MarketingLayout.astro";
+const canonical = new URL("/pricing/", Astro.site).toString();
+---
+
+<MarketingLayout title="Melbourne TV Mounting Quotes | Melbourne TVs" description="How Melbourne TVs prepares a written TV mounting quote from the TV, wall, bracket, cable route, access and local installer requirements." canonical={canonical} ogImage="https://cdn.brisbanetvs.com/work/v1/tv-soundbar.jpg">
+  <section class="idx-banner"><img class="idx-banner-img" src="https://cdn.brisbanetvs.com/work/v1/tv-soundbar.jpg" width="1600" height="1200" alt="" aria-hidden="true" /><div class="idx-banner-inner"><p class="idx-banner-title">Quoting</p></div></section>
+  <article class="idx">
+    <header class="idx-hero-copy"><p class="idx-eyebrow">Melbourne-specific quoting</p><h1>A written price based on the actual job.</h1><p class="idx-lede">Melbourne labour, travel and installer capacity are being verified independently. Until the installer price card is approved, we quote from the TV, wall, bracket, cable plan and access rather than publishing numbers that may not fit.</p><div class="idx-cta-row"><a class="idx-btn idx-btn-primary" href="/quote/">Send photos for a quote</a></div></header>
+    <hr class="idx-section-divider" />
+    <section class="idx-why"><h2>What affects the quote</h2><ul class="idx-why-list"><li><span class="idx-why-k">TV and bracket</span><span class="idx-why-v">Size, weight, VESA pattern, movement and whether a suitable bracket is supplied.</span></li><li><span class="idx-why-k">Wall construction</span><span class="idx-why-v">Timber or steel framing, brick, concrete, surface condition and concealed-service risk.</span></li><li><span class="idx-why-k">Cable finish</span><span class="idx-why-v">Existing outlets, devices, surface conduit and any licensed trade requirement.</span></li><li><span class="idx-why-k">Access and lift</span><span class="idx-why-v">Apartment rules, parking, stairs, fireplace height and whether a second installer is needed.</span></li></ul></section>
+    <aside class="idx-foot-cta"><div><h2>Get the scope in writing.</h2><p>The installer, inclusions, exclusions, price and available times are confirmed before you accept.</p></div><a class="idx-btn idx-btn-primary" href="/quote/">Request a quote</a></aside>
+  </article>
+</MarketingLayout>

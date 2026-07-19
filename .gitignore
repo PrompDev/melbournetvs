@@ -1,0 +1,63 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (if dev server added later)
+node_modules/
+.wrangler/
+
+# Misc
+*.log
+!git.tools/CHANGELOG.log
+__pycache__/
+*.py[cod]
+
+# Android local build and signing material
+android/**/.gradle/
+android/**/local.properties
+android/**/build/
+android/**/*.jks
+android/**/*.keystore
+android/**/releases/*.apk
+
+# Copied legacy Brisbane static site and non-production experiments. The
+# Melbourne production build is self-contained in astro/ plus workers/.
+/*.html
+/*.docx
+/*.pdf
+/*.js
+/*.json
+/css/
+/img/
+/js/
+/blog/
+/android/
+/astro-site/
+/blank template/
+/v3/
+/test/
+/api/
+/pbx/
+/git.tools/cms-auth-worker/
+/git.tools/
+/documentation/
+/Facebook META/
+/Leeads/
+/handover/
+/6
+/7
+/Or
+/$*
+/_headers
+/_redirects
+/robots.txt
+/sitemap.xml
+/wrangler.toml
+/mounting-big-tv-on-brick.md

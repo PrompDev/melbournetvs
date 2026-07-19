@@ -1,0 +1,78 @@
+---
+import MarketingLayout from "~/layouts/MarketingLayout.astro";
+const canonical = new URL("/quote/", Astro.site).toString();
+---
+
+<MarketingLayout title="Request a Melbourne TV Mounting Quote | Melbourne TVs" description="Send your Melbourne suburb, TV size, wall type and optional photos for a written TV mounting scope and local installer availability check." canonical={canonical} ogImage="https://cdn.brisbanetvs.com/work/v1/installer-large-tv.jpg" bodyClass="page-quote">
+  <section class="quote-hero">
+    <div><p class="quote-kicker">Photo-first written quote</p><h1>Show us the TV and wall.</h1><p>We use these details to check the likely mounting method, cable plan, local installer capacity and any licensed trade work before offering an appointment.</p></div>
+    <img src="https://cdn.brisbanetvs.com/work/v1/installer-large-tv.jpg" width="900" height="675" alt="Installer reviewing a large television wall mount" />
+  </section>
+
+  <section class="quote-wrap">
+    <form id="quote-form" class="quote-form" action="/api/website-lead" method="post" enctype="multipart/form-data" novalidate>
+      <input type="hidden" name="submission_id" value="" />
+      <input type="hidden" name="source" value="melbourne-photo-quote" />
+      <input type="hidden" name="page_url" value="" />
+      <div class="hp" aria-hidden="true"><label>Leave blank<input name="_bts_check" tabindex="-1" autocomplete="off" /></label></div>
+
+      <div class="form-head"><p>Quote details</p><span>Required fields are marked *</span></div>
+      <div class="grid two">
+        <label>Full name *<input name="name" autocomplete="name" required maxlength="160" /></label>
+        <label>Mobile number *<input name="phone" type="tel" autocomplete="tel" required maxlength="64" /></label>
+        <label>Email *<input name="email" type="email" autocomplete="email" required maxlength="254" /></label>
+        <label>Suburb *<input name="suburb" autocomplete="address-level2" required maxlength="120" /></label>
+        <label>Postcode<input name="postcode" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="postal-code" /></label>
+        <label>Service *<select name="service" required><option value="">Choose one</option><option>TV wall mounting</option><option>TV mounting and cable management</option><option>Soundbar mounting</option><option>Samsung Frame TV installation</option><option>Other TV installation enquiry</option></select></label>
+        <label>TV size in inches *<input name="tv_size" inputmode="numeric" type="number" min="30" max="130" required placeholder="e.g. 65" /></label>
+        <label>Wall type *<select name="wall" required><option value="">Choose one</option><option>Plasterboard - timber studs</option><option>Plasterboard - steel studs</option><option>Brick</option><option>Concrete</option><option>Rendered masonry</option><option>Apartment wall - unsure</option><option>Unsure</option></select></label>
+      </div>
+      <label>Preferred timing<input name="preferred_date" maxlength="100" placeholder="e.g. weekday afternoon or flexible" /></label>
+      <label>Anything else we should scope?<textarea name="message" rows="5" maxlength="4000" placeholder="Bracket, fireplace, cable devices, apartment access, parking or other details"></textarea></label>
+      <label class="uploads">Optional photos<input name="photos" type="file" accept="image/*" multiple /><small>Up to six images, maximum 10 MB each. Include the whole wall, TV label or size, bracket and nearby outlets.</small></label>
+      <label class="consent"><input type="checkbox" name="consent" value="yes" required /><span>I agree that Melbourne TVs may use these details to prepare this quote and contact me about it. *</span></label>
+      <label class="consent"><input type="checkbox" name="marketing_consent" value="yes" /><span>Optional: send me occasional Melbourne TVs updates.</span></label>
+      <button type="submit">Send for a written quote</button>
+      <p id="quote-status" class="status" role="status" aria-live="polite"></p>
+      <p class="fine">Submitting an enquiry does not create an installation booking. The independent installer, scope, price and availability are confirmed before appointment.</p>
+    </form>
+
+    <aside class="quote-aside"><h2>What happens next</h2><ol><li><strong>Scope review</strong><span>We check the TV, wall, bracket, access and cable plan.</span></li><li><strong>Local capacity check</strong><span>A suitable primary or backup installer is matched to the address.</span></li><li><strong>Written confirmation</strong><span>You receive the installer details, inclusions, exclusions, price and available times.</span></li></ol><div class="trade-note"><strong>Licensed work</strong><p>New or relocated fixed power requires a Victorian licensed electrician. Applicable regulated communications cabling requires a registered cabler.</p></div></aside>
+  </section>
+
+  <script>
+    const form = document.querySelector<HTMLFormElement>("#quote-form");
+    const status = document.querySelector<HTMLElement>("#quote-status");
+    if (form && status) {
+      const id = form.elements.namedItem("submission_id") as HTMLInputElement;
+      const page = form.elements.namedItem("page_url") as HTMLInputElement;
+      id.value = `web-${crypto.randomUUID()}`;
+      page.value = `${location.origin}${location.pathname}`;
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+        const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+        if (button) button.disabled = true;
+        status.textContent = "Sending your details...";
+        try {
+          const response = await fetch(form.action, { method: "POST", body: new FormData(form) });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok || payload.ok !== true) throw new Error(payload.error || "Could not save the request");
+          form.reset();
+          id.value = `web-${crypto.randomUUID()}`;
+          status.textContent = "Thanks. Your enquiry is saved for review and we will contact you with the next step.";
+          status.classList.add("success");
+        } catch (error) {
+          status.textContent = error instanceof Error ? error.message : "Could not send the request. Please try again.";
+          status.classList.add("error");
+        } finally {
+          if (button) button.disabled = false;
+        }
+      });
+    }
+  </script>
+</MarketingLayout>
+
+<style>
+  .quote-hero{display:grid;grid-template-columns:1fr 1fr;min-height:470px;background:#0d1714;color:#fff}.quote-hero>div{padding:90px max(28px,calc((100vw - 1180px)/2));padding-right:60px;display:flex;flex-direction:column;justify-content:center}.quote-hero h1{font-size:clamp(2.4rem,5vw,4.8rem);line-height:1.02;margin:0 0 20px}.quote-hero p{max-width:620px;color:#cbd9d3;font-size:1.08rem}.quote-kicker{text-transform:uppercase;letter-spacing:.12em;font-size:.76rem!important;color:#83d1ae!important;font-weight:700}.quote-hero img{width:100%;height:100%;object-fit:cover}.quote-wrap{width:min(1180px,calc(100% - 40px));margin:80px auto;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:55px}.quote-form{display:grid;gap:22px;padding:35px;border:1px solid #dce3df;border-radius:18px;box-shadow:0 15px 50px rgba(13,23,20,.08)}.form-head{display:flex;justify-content:space-between;gap:20px;align-items:center}.form-head p{font-size:1.4rem;font-weight:700;margin:0}.form-head span,.fine{color:#65736e;font-size:.82rem}.grid{display:grid;gap:18px}.two{grid-template-columns:1fr 1fr}label{display:grid;gap:7px;font-size:.9rem;font-weight:600}input,select,textarea{width:100%;padding:13px 14px;border:1px solid #cfd8d3;border-radius:9px;background:#fff;font:inherit;color:#10201b}textarea{resize:vertical}.uploads{padding:18px;background:#f5f8f6;border-radius:10px}.uploads small{color:#65736e;font-weight:400}.consent{display:flex;align-items:flex-start;gap:10px;font-weight:400}.consent input{width:auto;margin-top:4px}.quote-form button{min-height:54px;border:0;border-radius:999px;background:#184f3b;color:#fff;font-weight:700;font-size:1rem;cursor:pointer}.quote-form button:disabled{opacity:.6}.status{min-height:1.5em;margin:0}.status.success{color:#12623e}.status.error{color:#a02c2c}.hp{position:absolute;left:-9999px}.quote-aside h2{font-size:2rem;margin-top:0}.quote-aside ol{list-style:none;padding:0;counter-reset:steps}.quote-aside li{display:grid;gap:6px;padding:23px 0;border-bottom:1px solid #dce3df;counter-increment:steps}.quote-aside li:before{content:counter(steps);width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:#e6f1ec;color:#184f3b;font-weight:700}.quote-aside li span{color:#65736e}.trade-note{margin-top:28px;padding:22px;background:#f5f1e8;border-left:4px solid #ee7a35}.trade-note p{color:#5c645f;margin-bottom:0}@media(max-width:850px){.quote-hero,.quote-wrap{grid-template-columns:1fr}.quote-hero img{max-height:340px}.quote-hero>div{padding:70px 28px}.quote-wrap{margin:50px auto}.two{grid-template-columns:1fr}.quote-form{padding:24px}.form-head{align-items:flex-start;flex-direction:column}}
+</style>

@@ -1,0 +1,31 @@
+---
+import MarketingLayout from "../layouts/MarketingLayout.astro";
+---
+
+<MarketingLayout
+  title="Page not found | Melbourne TVs"
+  description="The requested Melbourne TVs page could not be found."
+  canonical="https://melbournetvs.com/404/"
+  noindex={true}
+>
+  <section class="not-found" aria-labelledby="not-found-title">
+    <p class="not-found-eyebrow">404</p>
+    <h1 id="not-found-title">That page is not here.</h1>
+    <p>The address may have changed. Use the links below to get back to TV mounting information or request a quote.</p>
+    <div class="not-found-actions">
+      <a class="not-found-primary" href="/">Back to Melbourne TVs</a>
+      <a class="not-found-secondary" href="/quote/">Get a quote</a>
+    </div>
+  </section>
+</MarketingLayout>
+
+<style>
+  .not-found { width: min(44rem, calc(100% - 2rem)); margin: 0 auto; padding: clamp(7rem, 16vw, 12rem) 0; text-align: center; }
+  .not-found-eyebrow { margin: 0 0 .75rem; color: #9c773f; font-size: .78rem; font-weight: 850; letter-spacing: .18em; }
+  h1 { margin: 0; color: #172736; font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.7rem, 8vw, 5rem); letter-spacing: -.045em; line-height: .98; }
+  .not-found > p:not(.not-found-eyebrow) { max-width: 35rem; margin: 1.2rem auto 0; color: #5d6b75; font-size: 1rem; line-height: 1.65; }
+  .not-found-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .7rem; margin-top: 1.7rem; }
+  .not-found-actions a { display: inline-flex; min-height: 2.8rem; align-items: center; justify-content: center; border: 1px solid #172e40; border-radius: .55rem; padding: .65rem 1rem; font-size: .88rem; font-weight: 780; text-decoration: none; }
+  .not-found-primary { color: #fff; background: #172e40; }
+  .not-found-secondary { color: #172e40; background: #fff; }
+</style>

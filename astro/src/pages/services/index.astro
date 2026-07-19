@@ -1,0 +1,31 @@
+---
+import MarketingLayout from "~/layouts/MarketingLayout.astro";
+const services = [
+  { slug: "tv-wall-mounting", title: "TV wall mounting", image: "https://cdn.brisbanetvs.com/work/v1/installer-large-tv.jpg", copy: "Fixed, tilt and full-motion options scoped against the TV, bracket, wall and lift requirements." },
+  { slug: "cable-concealment", title: "Cable management", image: "https://cdn.brisbanetvs.com/work/v1/clean-wall-mounted-tv.jpg", copy: "Surface, furniture and suitable in-wall routes, with licensed trade requirements identified first." },
+  { slug: "soundbar-installation", title: "Soundbar mounting", image: "https://cdn.brisbanetvs.com/work/v1/tv-soundbar.jpg", copy: "Wall or TV-bracket mounting planned around alignment, movement, connection and cable access." },
+  { slug: "samsung-frame-tv-installation", title: "Samsung Frame planning", image: "https://cdn.brisbanetvs.com/work/v1/frame-tv-lounge.jpg", copy: "Slim Fit bracket, wall flatness, One Connect placement and cable route reviewed before drilling." },
+];
+const canonical = new URL("/services/", Astro.site).toString();
+---
+
+<MarketingLayout title="TV Installation Services Melbourne | Melbourne TVs" description="Explore the Melbourne TV mounting services available for photo-first written quotes, with local installer capacity confirmed before booking." canonical={canonical} ogImage={services[0].image}>
+  <section class="idx-banner"><img class="idx-banner-img" src={services[0].image} width="2880" height="2160" alt="" aria-hidden="true" /><div class="idx-banner-inner"><p class="idx-banner-title">Services</p></div></section>
+  <article class="idx">
+    <header class="idx-hero-copy">
+      <p class="idx-eyebrow">A clear scope before an appointment</p>
+      <h1>TV mounting services planned around your actual wall.</h1>
+      <p class="idx-lede">Send the setup details first. We confirm the likely method, any separate licensed trade work, local installer availability and a written price before booking.</p>
+      <div class="idx-cta-row"><a class="idx-btn idx-btn-primary" href="/quote/">Request a written quote</a><a class="idx-btn idx-btn-ghost" href="/locations/">Check your area</a></div>
+    </header>
+    <hr class="idx-section-divider" />
+    <section class="idx-list-section" aria-labelledby="service-list-heading">
+      <h2 id="service-list-heading">Core launch services</h2>
+      <ul class="idx-card-grid">
+        {services.map((service) => <li class="idx-card"><a class="idx-card-link" href={`/services/${service.slug}/`}><div class="idx-card-img-wrap"><img class="idx-card-img" src={service.image} width="800" height="600" alt="" loading="lazy" /></div><div class="idx-card-body"><h3 class="idx-card-title">{service.title}</h3><p class="idx-card-desc">{service.copy}</p><div class="idx-card-foot"><span>View scope</span><span aria-hidden="true">→</span></div></div></a></li>)}
+      </ul>
+    </section>
+    <section class="idx-why"><h2>Work that needs another trade</h2><ul class="idx-why-list"><li><span class="idx-why-k">Fixed electrical work</span><span class="idx-why-v">New or relocated power requires a Victorian licensed electrician.</span></li><li><span class="idx-why-k">Regulated cabling</span><span class="idx-why-v">Applicable communications cabling requires an appropriately registered cabler.</span></li><li><span class="idx-why-k">Unusual structures</span><span class="idx-why-v">Asbestos risk, weak substrates and complex commercial systems are assessed before acceptance.</span></li></ul></section>
+    <aside class="idx-foot-cta"><div><h2>Show us the TV and wall.</h2><p>Photos make the written quote faster and more accurate.</p></div><a class="idx-btn idx-btn-primary" href="/quote/">Start the quote</a></aside>
+  </article>
+</MarketingLayout>

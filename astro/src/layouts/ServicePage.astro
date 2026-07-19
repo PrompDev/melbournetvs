@@ -1,0 +1,473 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+/**
+ * Only link to related services / locations that actually exist as
+ * collection entries — otherwise cross-links 404. Build lookup sets once.
+ */
+const __existingServices = new Set(
+  (await getCollection("services", ({ data }) => !data.draft)).map((e) => e.id),
+);
+const __existingLocations = new Set(
+  (await getCollection("locations", ({ data }) => !data.draft)).map((e) => e.id),
+);
+
+/**
+ * ServicePage — dedicated layout for entries in the `services` collection.
+ *
+ * Layout pattern (mirrors LocationPage/New Farm — the design the user
+ * approved as the canonical content template):
+ *   1. Full-bleed banner strip with the service name overlay
+ *   2. 1720px container with a split hero (left: breadcrumbs + copy +
+ *      highlights; right: image stretched to match left-column height)
+ *   3. Full-width horizontal rule separator
+ *   4. 70% / 380px article grid with a sticky booking sidebar that
+ *      follows the reader through body sections (area, warranty, FAQ,
+ *      related) on the left
+ *   5. Dark foot-CTA strip
+ *
+ * SEO payload (unchanged from previous design):
+ *   - schema.org/Service JSON-LD with Offer + priceSpecification
+ *   - BreadcrumbList JSON-LD
+ *   - FAQPage JSON-LD (conditional — only when FAQs are populated)
+ */
+
+interface FaqItem { q: string; a: string; }
+
+interface Props {
+  frontmatter: {
+    title: string;
+    description: string;
+    heroImage: string;
+    heroAlt: string;
+    heroWidth?: number;
+    heroHeight?: number;
+    publishDate: Date;
+    updatedDate?: Date;
+    priceFrom?: number;
+    priceTo?: number;
+    priceCurrency: string;
+    priceUnit: string;
+    duration?: string;
+    highlights: string[];
+    serviceArea: string[];
+    warranty?: string;
+    relatedServices: string[];
+    relatedLocations: string[];
+    faq: FaqItem[];
+    tags: string[];
+  };
+  slug?: string;
+}
+
+const { frontmatter, slug } = Astro.props;
+const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const businessName = "Melbourne TVs";
+const businessUrl = new URL("/", Astro.site).toString();
+const serviceFootprint = [
+  "Central and Inner Melbourne",
+  "Inner North Melbourne",
+  "Inner East Melbourne",
+  "Bayside and Inner South-East Melbourne",
+  "East Melbourne and the Dandenong Ranges",
+  "North Melbourne and Airport corridor",
+  "West and North-West Melbourne",
+  "South-East Growth Corridor",
+  "Frankston and Mornington Peninsula",
+].map((name) => ({ "@type": "AdministrativeArea", name }));
+
+// Filter related cross-links to only include entries that have real pages.
+const filteredRelatedServices = frontmatter.relatedServices.filter((s) => __existingServices.has(s));
+const filteredRelatedLocations = frontmatter.relatedLocations.filter((l) => __existingLocations.has(l));
+
+/**
+ * Slug → readable label, preserving acronyms so CSS capitalize rules
+ * don't mangle "TV" into "Tv". Used for the banner title + sidebar
+ * heading so we get a short, punchy label rather than the full SEO title.
+ */
+const ACRONYMS = new Set(["tv", "av", "hdmi", "uhd", "4k", "8k"]);
+function formatServiceLabel(s: string): string {
+  return s
+    .split("-")
+    .map((w) =>
+      ACRONYMS.has(w.toLowerCase())
+        ? w.toUpperCase()
+        : w.charAt(0).toUpperCase() + w.slice(1)
+    )
+    .join(" ");
+}
+const shortLabel = slug ? formatServiceLabel(slug) : frontmatter.title;
+
+const priceRange = frontmatter.priceFrom
+  ? (frontmatter.priceTo && frontmatter.priceTo !== frontmatter.priceFrom
+    ? `${frontmatter.priceCurrency} $${frontmatter.priceFrom}-${frontmatter.priceTo}`
+    : `${frontmatter.priceCurrency} from $${frontmatter.priceFrom}`)
+  : "Written quote after photo review";
+
+// schema.org/Service — the main structured-data payload for this page type.
+const serviceLd: Record<string, any> = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: frontmatter.title,
+  description: frontmatter.description,
+  url: pageUrl,
+  image: new URL(frontmatter.heroImage, Astro.site).toString(),
+  serviceType: frontmatter.title,
+  provider: {
+    "@type": "LocalBusiness",
+    name: businessName,
+    url: businessUrl,
+    areaServed: serviceFootprint,
+  },
+  areaServed: serviceFootprint,
+  ...(frontmatter.priceFrom ? { offers: {
+    "@type": "Offer",
+    price: frontmatter.priceFrom,
+    priceCurrency: frontmatter.priceCurrency,
+    availability: "https://schema.org/InStock",
+    url: pageUrl,
+    ...(frontmatter.priceTo && frontmatter.priceTo !== frontmatter.priceFrom
+      ? {
+          priceSpecification: {
+            "@type": "PriceSpecification",
+            minPrice: frontmatter.priceFrom,
+            maxPrice: frontmatter.priceTo,
+            priceCurrency: frontmatter.priceCurrency,
+            unitText: frontmatter.priceUnit,
+          },
+        }
+      : {}),
+  }} : {}),
+  ...(frontmatter.warranty ? { termsOfService: frontmatter.warranty } : {}),
+};
+
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: businessUrl },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Services",
+      item: new URL("/services/", Astro.site).toString(),
+    },
+    { "@type": "ListItem", position: 3, name: frontmatter.title, item: pageUrl },
+  ],
+};
+
+const faqLd =
+  frontmatter.faq.length > 0
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: frontmatter.faq.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
+      }
+    : null;
+---
+<BaseLayout
+  title={frontmatter.title}
+  description={frontmatter.description}
+  image={frontmatter.heroImage}
+  canonical={pageUrl}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(serviceLd)} />
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbLd)} />
+  {faqLd && <script type="application/ld+json" set:html={JSON.stringify(faqLd)} />}
+
+  {/* Full-bleed banner strip — service name laid over a cinematic image.
+      Breaks out of the article's container via the 100vw margin trick so
+      it always spans the true viewport width regardless of parent. */}
+  <section class="svc-banner">
+    <img
+      class="svc-banner-img"
+      src={frontmatter.heroImage}
+      width={frontmatter.heroWidth ?? 1200}
+      height={frontmatter.heroHeight ?? 1200}
+      alt=""
+      aria-hidden="true"
+      decoding="async"
+    />
+    <div class="svc-banner-inner">
+      <p class="svc-banner-title">{shortLabel}</p>
+    </div>
+  </section>
+
+  <article class="svc">
+    {/* Split layout: left column holds breadcrumbs↓hero copy↓highlights,
+        right column is a single image stretched to match the left column's
+        total height (align-items: stretch on the grid + absolutely-positioned
+        image inside a wrapper so the image can't push the row taller). */}
+    <div class="svc-split">
+      <div class="svc-split-left">
+        <nav class="svc-crumbs" aria-label="Breadcrumb">
+          <a href="/">Home</a>
+          <span aria-hidden="true">›</span>
+          <a href="/services/">Services</a>
+          <span aria-hidden="true">›</span>
+          <span class="svc-crumbs-current">{frontmatter.title}</span>
+        </nav>
+        <header class="svc-hero-copy">
+          <p class="svc-eyebrow">Melbourne TVs · Service</p>
+          <h1>{frontmatter.title}</h1>
+          <p class="svc-lede">{frontmatter.description}</p>
+          <div class="svc-price">
+            <span class="svc-price-main">{priceRange}</span>
+            <span class="svc-price-unit">{frontmatter.priceUnit}</span>
+            {frontmatter.duration && <span class="svc-price-dot" aria-hidden="true">·</span>}
+            {frontmatter.duration && <span class="svc-duration">{frontmatter.duration}</span>}
+          </div>
+          <div class="svc-cta-row">
+            <a class="svc-btn svc-btn-primary" href="/quote/">Request a written quote</a>
+            <a class="svc-btn svc-btn-ghost" href="/locations/">Check your suburb</a>
+          </div>
+        </header>
+
+        {frontmatter.highlights.length > 0 && (
+          <section class="svc-highlights" aria-labelledby="svc-highlights-h">
+            <h2 id="svc-highlights-h">What's included</h2>
+            <ul class="svc-highlight-grid">
+              {frontmatter.highlights.map((h) => (
+                <li class="svc-highlight-card">
+                  <span class="svc-check" aria-hidden="true">✓</span>
+                  <span>{h}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+      {/* Wrapper owns the grid cell so the image (absolutely-positioned
+          inside it) can't push the row taller than the left column. */}
+      <div class="svc-split-img-wrap">
+        <img
+          class="svc-split-img"
+          src={frontmatter.heroImage}
+          width={frontmatter.heroWidth ?? 1200}
+          height={frontmatter.heroHeight ?? 1200}
+          alt={frontmatter.heroAlt}
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
+        />
+      </div>
+    </div>
+
+    {/* Full-width divider — ends the split hero, starts the body. */}
+    <hr class="svc-section-divider" />
+
+    {/* Two-column article: flexible main column on the left, fixed 380px
+        sticky booking card on the right. Mirrors the Locations layout. */}
+    <div class="svc-article-grid">
+      <div class="svc-article-main">
+        {frontmatter.serviceArea.length > 0 && (
+          <section class="svc-area" aria-labelledby="svc-area-h">
+            <h2 id="svc-area-h">Popular service areas</h2>
+            <p class="u-muted">Covered suburbs across Melbourne:</p>
+            <ul class="svc-area-list">
+              {frontmatter.serviceArea.map((s) => (
+                <li><span class="svc-chip">{s}</span></li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section class="svc-body prose">
+          <slot />
+        </section>
+
+        {frontmatter.warranty && (
+          <section class="svc-warranty" aria-labelledby="svc-warranty-h">
+            <h2 id="svc-warranty-h">Warranty</h2>
+            <p>{frontmatter.warranty}</p>
+          </section>
+        )}
+
+        {frontmatter.faq.length > 0 && (
+          <section class="svc-faq" aria-labelledby="svc-faq-h">
+            <h2 id="svc-faq-h">Frequently asked questions</h2>
+            <div class="svc-faq-list">
+              {frontmatter.faq.map((f) => (
+                <details class="svc-faq-item">
+                  <summary>{f.q}</summary>
+                  <p>{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {(filteredRelatedServices.length > 0 || filteredRelatedLocations.length > 0) && (
+          <section class="svc-related" aria-labelledby="svc-related-h">
+            <h2 id="svc-related-h">Related on Melbourne TVs</h2>
+            <div class="svc-related-grid">
+              {filteredRelatedServices.length > 0 && (
+                <div>
+                  <h3>Other services</h3>
+                  <ul>
+                    {filteredRelatedServices.map((s) => (
+                      <li><a href={`/services/${s}/`}>{s.replace(/-/g, " ")}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {filteredRelatedLocations.length > 0 && (
+                <div>
+                  <h3>Popular suburbs</h3>
+                  <ul>
+                    {filteredRelatedLocations.map((l) => (
+                      <li><a href={`/locations/${l}/`}>{l.replace(/-/g, " ")}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+      </div>
+
+      <aside class="svc-sidebar" aria-label="Booking sidebar">
+        <div class="svc-book-card">
+          <p class="svc-book-eyebrow">Melbourne TVs · Service</p>
+          <h3 class="svc-book-title">Quote a {shortLabel} job</h3>
+          <p class="svc-book-desc">Send the TV and wall details. Local capacity, scope and price are confirmed before an appointment.</p>
+          <ul class="svc-book-list">
+            <li><span class="svc-book-k">Price</span><span>{frontmatter.priceFrom ? `From ${frontmatter.priceFrom}` : "Written quote"}</span></li>
+            <li><span class="svc-book-k">Duration</span><span>{frontmatter.duration ?? "—"}</span></li>
+            <li><span class="svc-book-k">Coverage</span><span>{frontmatter.serviceArea.length > 0 ? `${frontmatter.serviceArea.length} popular areas` : "See locations"}</span></li>
+          </ul>
+          <a class="svc-book-btn" href="/quote/">Book this service →</a>
+          <a class="svc-book-link" href="/locations/">check your service area</a>
+        </div>
+      </aside>
+    </div>
+
+    <aside class="svc-foot-cta">
+      <div>
+        <h2>Ready for an accurate scope?</h2>
+        <p>Send photos and receive local availability and pricing in writing.</p>
+      </div>
+      <a class="svc-btn svc-btn-primary" href="/quote/">Request a written quote</a>
+    </aside>
+  </article>
+</BaseLayout>
+
+<style is:global>
+  /* Full-bleed banner — escapes any parent container via the 100vw margin
+     trick, same pattern as LocationPage so chrome feels consistent across
+     Location / Service / Product / Mount detail pages. */
+  .svc-banner { position: relative; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); width: 100vw; height: clamp(240px, 32vh, 420px); overflow: hidden; background: #131619; }
+  .svc-banner-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+  .svc-banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 35%, rgba(0,0,0,0) 70%); pointer-events: none; }
+  .svc-banner-inner { position: relative; z-index: 1; width: 100%; max-width: 1200px; height: 100%; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; }
+  @media (min-width: 1201px) {
+    .svc-banner-inner { width: 90%; max-width: 1720px; padding: 0; }
+  }
+  .svc-banner-title { margin: 0; color: #fff; font-weight: 400; font-size: clamp(2.5rem, 6vw, 5rem); letter-spacing: 0.02em; text-transform: uppercase; line-height: 1; text-shadow: 0 2px 18px rgba(0,0,0,0.35); }
+
+  /* Outer container mirrors the site header exactly (90% / 1720px cap),
+     so content edges line up with logo + nav. */
+  .svc { width: 100%; max-width: 1200px; margin: 0 auto; padding: 2rem 24px 4rem; }
+  @media (min-width: 1201px) {
+    .svc { width: 90%; max-width: 1720px; padding: 2rem 0 4rem; }
+  }
+  .svc-crumbs { font-size: 0.85rem; color: #5a6271; display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 3.5rem; }
+  .svc-crumbs a { color: #5a6271; text-decoration: none; }
+  .svc-crumbs a:hover { color: #131619; text-decoration: underline; }
+  .svc-crumbs-current { color: #131619; font-weight: 500; }
+
+  /* Split hero: left column = breadcrumbs + copy + highlights,
+     right column = image that stretches to match the left's total
+     height (align-items: stretch + absolutely-positioned image
+     inside wrapper so it can't push the row taller). */
+  .svc-split { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 2.5rem; align-items: stretch; margin-bottom: 2rem; }
+  .svc-split-left { display: flex; flex-direction: column; min-width: 0; }
+  .svc-split-img-wrap { position: relative; width: 100%; height: 100%; min-height: 0; border-radius: 10px; overflow: hidden; background: #eef0f3; }
+  .svc-split-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  @media (max-width: 760px) {
+    .svc-split { grid-template-columns: 1fr; }
+    .svc-split-img-wrap { position: relative; height: auto; aspect-ratio: 4/3; }
+  }
+  .svc-hero-copy { display: flex; flex-direction: column; justify-content: flex-start; margin-bottom: 4rem; }
+  .svc-eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: #8a94a6; margin: 0 0 0.5rem; font-weight: 600; }
+  .svc-hero-copy h1 { font-size: clamp(1.8rem, 3.2vw, 2.6rem); line-height: 1.15; margin: 0 0 0.75rem; }
+  .svc-lede { font-size: 1.05rem; color: #3d4656; line-height: 1.55; margin: 0 0 1.25rem; }
+  .svc-price { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .svc-price-main { font-size: 1.5rem; font-weight: 700; color: #131619; }
+  .svc-price-unit { color: #5a6271; font-size: 0.95rem; }
+  .svc-price-dot { color: #c5ccd6; }
+  .svc-duration { color: #5a6271; font-size: 0.95rem; }
+  .svc-cta-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .svc-btn { display: inline-flex; align-items: center; padding: 0.7rem 1.3rem; border-radius: 6px; font-weight: 600; text-decoration: none; font-size: 0.95rem; }
+  .svc-btn-primary { background: #131619; color: #fff; }
+  .svc-btn-primary:hover { background: #2a2f35; }
+  .svc-btn-ghost { background: transparent; color: #131619; border: 1px solid #d7dbe2; }
+  .svc-btn-ghost:hover { border-color: #131619; }
+
+  /* Highlights — inside the left split column so the outer container
+     (the column itself) constrains width. */
+  .svc-highlights { margin: 0; }
+  .svc-highlights h2 { font-size: 1.4rem; margin: 0 0 1rem; }
+  .svc-highlight-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; list-style: none; padding: 0; margin: 0; }
+  .svc-highlight-card { background: #fafbfc; border: 1px solid #eef0f3; border-radius: 8px; padding: 0.85rem 1rem; display: flex; gap: 0.65rem; align-items: flex-start; font-size: 0.95rem; }
+  .svc-check { color: #16a34a; font-weight: 700; flex-shrink: 0; }
+
+  /* Full-width divider between split hero and article grid. */
+  .svc-section-divider { width: 100%; border: 0; border-top: 1px solid #e5e7eb; margin: 3.5rem 0 0; }
+
+  /* Article grid — flexible main column + fixed 380px sticky sidebar. */
+  .svc-article-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; column-gap: 4rem; row-gap: 2rem; align-items: start; margin: 3.5rem 0; }
+  .svc-article-main { min-width: 0; }
+  .svc-article-main > section { margin: 0 0 3.5rem; }
+  .svc-article-main > section:last-child { margin-bottom: 0; }
+
+  /* Sticky booking card. */
+  .svc-sidebar { position: sticky; top: 6rem; align-self: start; }
+  .svc-book-card { background: #131619; color: #fff; padding: 1.75rem; border-radius: 12px; display: flex; flex-direction: column; gap: 0.85rem; }
+  .svc-book-eyebrow { margin: 0; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8a94a6; font-weight: 600; }
+  .svc-book-title { margin: 0; font-size: 1.25rem; line-height: 1.25; color: #fff; font-family: 'Noto Serif', serif; font-weight: 400; }
+  .svc-book-desc { margin: 0; color: #c5ccd6; font-size: 0.92rem; line-height: 1.55; }
+  .svc-book-list { list-style: none; padding: 0; margin: 0.25rem 0 0; display: flex; flex-direction: column; gap: 0.5rem; border-top: 1px solid #2a2f35; padding-top: 0.9rem; }
+  .svc-book-list li { display: flex; justify-content: space-between; font-size: 0.88rem; color: #eef0f3; }
+  .svc-book-k { color: #8a94a6; }
+  .svc-book-btn { display: inline-flex; justify-content: center; margin-top: 0.6rem; padding: 0.75rem 1rem; background: #fff; color: #131619; font-weight: 600; border-radius: 8px; text-decoration: none; transition: background 0.15s; }
+  .svc-book-btn:hover { background: #eef0f3; }
+  .svc-book-link { color: #8a94a6; font-size: 0.85rem; text-decoration: underline; text-align: center; }
+  .svc-book-link:hover { color: #fff; }
+
+  /* Collapse to single column under 900px — sidebar drops below and
+     un-sticks so it doesn't float mid-scroll on narrow screens. */
+  @media (max-width: 900px) {
+    .svc-article-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .svc-sidebar { position: static; }
+  }
+
+  .svc-area h2, .svc-warranty h2, .svc-faq h2, .svc-related h2 { font-size: 1.4rem; margin: 0 0 1rem; }
+  .svc-area-list { list-style: none; padding: 0; margin: 0.75rem 0 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .svc-chip { display: inline-flex; padding: 0.35rem 0.8rem; background: #eef0f3; color: #131619; border-radius: 999px; font-size: 0.85rem; text-transform: capitalize; }
+
+  .svc-faq-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .svc-faq-item { background: #fff; border: 1px solid #eef0f3; border-radius: 8px; padding: 0.85rem 1rem; }
+  .svc-faq-item summary { font-weight: 600; cursor: pointer; list-style: none; }
+  .svc-faq-item summary::-webkit-details-marker { display: none; }
+  .svc-faq-item summary::after { content: "+"; float: right; color: #8a94a6; font-weight: 400; }
+  .svc-faq-item[open] summary::after { content: "−"; }
+  .svc-faq-item p { margin: 0.75rem 0 0; color: #3d4656; line-height: 1.6; }
+
+  .svc-related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
+  .svc-related-grid h3 { font-size: 1rem; margin: 0 0 0.5rem; color: #5a6271; font-weight: 600; }
+  .svc-related-grid ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+  .svc-related-grid a { color: #131619; text-decoration: none; text-transform: capitalize; }
+  .svc-related-grid a:hover { text-decoration: underline; }
+
+  .svc-foot-cta { margin-top: 3rem; padding: 1.75rem; background: #131619; color: #fff; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+  .svc-foot-cta h2 { margin: 0 0 0.35rem; font-size: 1.3rem; color: #fff; }
+  .svc-foot-cta p { margin: 0; color: #c5ccd6; }
+  .svc-foot-cta .svc-btn-primary { background: #fff; color: #131619; }
+  .svc-foot-cta .svc-btn-primary:hover { background: #eef0f3; }
+</style>

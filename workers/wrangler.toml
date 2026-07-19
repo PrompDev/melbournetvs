@@ -1,0 +1,26 @@
+name = "melbournetvs-lead-worker"
+main = "lead-worker.js"
+compatibility_date = "2026-07-19"
+compatibility_flags = ["nodejs_compat"]
+account_id = "8d813ed7931872a79e12d13a6669b601"
+route = "melbournetvs.com/api/*"
+workers_dev = true
+
+[observability]
+enabled = true
+head_sampling_rate = 1.0
+
+[[r2_buckets]]
+binding = "LEAD_UPLOADS"
+bucket_name = "melbournetvs-lead-uploads"
+
+[[d1_databases]]
+binding = "OPERATIONS_DB"
+database_name = "melbournetvs-operations"
+database_id = "76971043-7ad7-467b-b8a1-d6d57aeab44b"
+migrations_dir = "migrations"
+
+# Production secrets are managed with Wrangler and never stored here:
+# - GOOGLE_APPS_SCRIPT_SECRET
+# - LEAD_SYNC_SECRET (only if the private sync endpoint is enabled)
+# GOOGLE_APPS_SCRIPT_URL is added after the new web app is authorised.

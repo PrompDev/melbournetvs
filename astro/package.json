@@ -1,0 +1,21 @@
+{
+  "name": "melbourne-tvs-astro",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=20 <25"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build && pnpm run verify:seo",
+    "verify:seo": "node scripts/verify-seo-output.mjs && node scripts/audit-links.mjs",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "7.1.1",
+    "jose": "^6.2.3"
+  }
+}

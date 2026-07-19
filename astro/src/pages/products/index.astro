@@ -1,0 +1,8 @@
+---
+import MarketingLayout from "~/layouts/MarketingLayout.astro";
+const canonical = new URL("/products/", Astro.site).toString();
+---
+<MarketingLayout title="TV Mounting Equipment Guidance | Melbourne TVs" description="Bracket and accessory guidance is supplied as part of a scoped Melbourne TV mounting quote." canonical={canonical} ogImage="https://cdn.brisbanetvs.com/work/v1/tv-wall-bracket.jpg">
+  <article class="simple"><p class="eyebrow">Equipment guidance</p><h1>Choose the bracket after the TV and wall are checked.</h1><p>Product sales are not live. If you need a bracket, include the TV model and wall photos in the quote request. The proposed bracket and supply cost will be identified in writing.</p><a href="/quote/">Request a scoped quote →</a></article>
+</MarketingLayout>
+<style>.simple{width:min(850px,calc(100% - 40px));margin:90px auto 120px}.simple h1{font-size:clamp(2.5rem,6vw,5rem);line-height:1.05}.simple p{font-size:1.15rem;color:#52615b}.simple a{display:inline-block;margin-top:20px;font-weight:700}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:.76rem!important;color:#247253!important;font-weight:700}</style>

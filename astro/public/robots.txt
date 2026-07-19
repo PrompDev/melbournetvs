@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://melbournetvs.com/sitemap.xml

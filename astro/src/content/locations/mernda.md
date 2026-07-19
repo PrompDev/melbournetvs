@@ -1,0 +1,48 @@
+---
+title: "TV Wall Mounting Mernda | Melbourne TVs"
+description: "TV wall mounting enquiries in Mernda, Whittlesea City. Send wall and TV photos for a written scope, local availability check and firm quote."
+heroImage: "/media/mounting-big-tv-on-brick-hero.jpg"
+heroAlt: "Large television being carefully positioned on a wall bracket"
+publishDate: 2026-07-19
+suburb: "Mernda"
+region: "North & Airport"
+latitude: -37.59165
+longitude: 145.08367
+commonHousingStock: ["growth-area, established suburban or township homes"]
+nearbySuburbs: ["south-morang","doreen","woodstock"]
+servicesOffered: ["tv-wall-mounting","cable-concealment","soundbar-installation"]
+faq: [
+  {
+    "q": "Is TV mounting available in Mernda?",
+    "a": "Send the address, TV size and wall photos first. We will confirm installer coverage in Mernda, the scope and a written price before offering an appointment."
+  },
+  {
+    "q": "Can the installer add or move a power point?",
+    "a": "New or relocated fixed electrical work must be completed by a Victorian licensed electrician. We identify that requirement separately when reviewing your photos."
+  },
+  {
+    "q": "Who completes the work?",
+    "a": "Melbourne TVs is launching as a managed referral and booking service. The assigned independent installer is disclosed before the appointment and confirms the final job scope."
+  }
+]
+tags: ["melbourne","mernda","tv-wall-mounting"]
+draft: true
+---
+
+## Planning a TV mount in Mernda
+
+Mernda is within Melbourne's northern corridor, where established suburbs transition to fast-growth and semi-rural areas, close to South Morang, Doreen, Woodstock. The broader catchment is shaped by Plenty Road, Mernda rail corridor, Epping, South Morang and Mernda. The local job mix commonly includes fast-growing estates alongside established post-war suburbs.
+
+For an accurate quote, send a front-on photo of the wall, the TV make and size, the bracket if you already have one, and any access notes. We check the wall type, lift requirements, cable plan and local installer availability before confirming the job.
+
+## Local scheduling notes
+
+Cluster appointments by corridor; outer and semi-rural addresses need a travel window and driveway/access check.
+
+This page is staged for launch but remains unpublished until a primary and backup installer have been verified for the North & Airport dispatch zone.
+
+## Scope and trade boundaries
+
+Standard mounting can include bracket positioning, suitable mechanical fixings, levelling and connection to existing outlets. Any new or relocated fixed power must be completed by a licensed electrician. Regulated communications cabling must be completed by an appropriately registered cabler.
+
+[Send photos for a written quote](/quote/)
