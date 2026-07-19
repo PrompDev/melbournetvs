@@ -6,8 +6,8 @@ account_id = "8d813ed7931872a79e12d13a6669b601"
 workers_dev = true
 
 routes = [
-  { pattern = "melbournetvs.com/*", zone_name = "melbournetvs.com" },
-  { pattern = "www.melbournetvs.com/*", zone_name = "melbournetvs.com" }
+  { pattern = "melbournetvs.com", custom_domain = true },
+  { pattern = "www.melbournetvs.com", custom_domain = true }
 ]
 
 [assets]
